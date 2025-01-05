@@ -10,33 +10,30 @@
     canvas.height = window.innerHeight;
 
     function drawRandomBoxes() {
-        // Base thickness as a percentage of the smaller screen dimension
+        // Base line thickness as a percentage of the smaller screen dimension
         const BaseThickness = 0.015 * Math.min(canvas.width, canvas.height);
 
         // Up to 30% bigger than BaseThickness
         const ThicknessFactor = 0.3;
 
-        // Dynamically set boxCount to scale with screen area
-        // Larger screens = more boxes
-        const boxCount = Math.floor((canvas.width * canvas.height) / 30000);
+        // Dynamically set boxCount based on screen area (fewer boxes = bigger overlap)
+        const area = canvas.width * canvas.height;
+        const boxCount = Math.floor(area / 50000);
 
-        // Configure min/max box sizes for big overlapping boxes
-        const minBoxWidth = 150;
-        const maxBoxWidth = 600;
-        const minBoxHeight = 150;
-        const maxBoxHeight = 600;
+        // Larger minimum sizes to avoid tiny leftover spaces
+        const minBoxWidth = 200;
+        const maxBoxWidth = 0.6 * canvas.width;
+        const minBoxHeight = 200;
+        const maxBoxHeight = 0.6 * canvas.height;
 
-        // Color palette
         const colors = ['#ff4500', '#ff6347', '#ffa07a', '#ff69b4', '#8a2be2', '#6a5acd'];
 
-        // Draw the boxes
         for (let i = 0; i < boxCount; i++) {
-            // Random size within specified range
+            // Big random dimensions
             const width = Math.random() * (maxBoxWidth - minBoxWidth) + minBoxWidth;
             const height = Math.random() * (maxBoxHeight - minBoxHeight) + minBoxHeight;
 
-            // Random position allows overlapping
-            // Sometimes they go off-screen to make sure coverage is strong
+            // Offset placement so boxes often extend outside the screen, ensuring overlap
             const x = -width / 2 + Math.random() * (canvas.width + width);
             const y = -height / 2 + Math.random() * (canvas.height + height);
 
@@ -44,7 +41,7 @@
             ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
             ctx.strokeStyle = '#111';
 
-            // Thicker lines with slight variation
+            // Vary line width within 30% of the base
             ctx.lineWidth = BaseThickness * (1 + ThicknessFactor * Math.random());
 
             ctx.roundRect(x, y, width, height, 15);
