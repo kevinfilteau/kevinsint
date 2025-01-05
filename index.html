@@ -28,8 +28,21 @@
         body, html {
             font-family: "Quicksand", Helvetica, sans-serif;
             font-weight: normal;
-            color: #474747;
+            color: #ffabdc;
             font-size: 17pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fixed Background Canvas */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: linear-gradient(135deg, #3b0a5e, #ff6600);
         }
 
         h1, h2 {
@@ -202,7 +215,7 @@
     });
 </script>
 
-
+<script src="background.js"></script>
 </body>
 
 </html>
