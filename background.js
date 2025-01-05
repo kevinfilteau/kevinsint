@@ -9,6 +9,9 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+
+    const areaFactor = Math.floor(Math.sqrt(canvas.width * canvas.height) / 100);
+
     function drawRandomBoxesStatic() {
 
         const areaFactor = Math.floor(Math.sqrt(canvas.width * canvas.height) / 100);
@@ -96,6 +99,8 @@
             h = canvas.height;
         ctx.clearRect(0, 0, w, h);
 
+        const boxCount = 10 + areaFactor * 50;
+
         // Base background
         const grad = ctx.createLinearGradient(0, 0, w, h);
         grad.addColorStop(0, '#1a1a2e');
@@ -105,7 +110,7 @@
 
         // Neon-ish blocks
         const colors = ['#f72585', '#b5179e', '#7209b7', '#560bad', '#4361ee', '#4cc9f0'];
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < boxCount; i++) {
             ctx.save();
             ctx.globalAlpha = 0.1 + Math.random() * 0.9;
             ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
