@@ -21,48 +21,30 @@
 
     <meta name="theme-color" content="#ffffff">
 
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Imbue:wght@800&family=Quicksand&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand&family=DM+Serif+Text:ital@0;1&family=VT323&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --color-01: '#F230AE';
-            --color-02: '#6038F2';
-            --color-03: '#F2E530';
-            --color-04: '#F2921D';
-            --color-05: '#F24B0F';
-        }
-
-        .color-01 {
-            color: var(--color-01);
-        }
-
-        .color-02 {
-            color: var(--color-02);
-        }
-
-        .color-03 {
-            color: var(--color-03);
-        }
-
-        .color-04 {
-            color: var(--color-04);
-        }
-
-        .color-05 {
-            color: var(--color-05);
+            --color-card-text: #ffffff;
+            --color-01: #F230AE;
+            --color-02: #6038F2;
+            --color-03: #F2E530;
+            --color-04: #F2921D;
+            --color-05: #F24B0F;
         }
 
         body, html {
             font-family: "Quicksand", Helvetica, sans-serif;
             font-weight: normal;
-            color: #ffabdc;
+            color: #ffffff;
             font-size: 17pt;
             margin: 0;
             padding: 0;
         }
 
-        /* Fixed Background Canvas */
+        /* Fixed Background Canvas, used by the background script. */
         #background {
             position: fixed;
             top: 0;
@@ -74,16 +56,18 @@
         }
 
         h1, h2 {
-            font-family: "Imbue", Helvetica, sans-serif;
-            font-weight: 800;
             text-align: center;
+            font-family: "DM Serif Text", serif;
+        }
+
+        .card a {
+            color: var(--color-card-text);
         }
 
         .wrapper {
-            /*display: none;*/
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
         }
 
         .text-center {
@@ -111,22 +95,20 @@
             gap: 20px;
         }
 
-        .present {
-            max-width: 768px;
-            margin: 50px auto;
-        }
-
         .card {
-            padding: 0;
-            margin: 25px;
+            padding: 50px;
+            margin: 100px 25px;
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.9) 100%);
+            background-blend-mode: overlay;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            width: 100%;
         }
 
-        .present-image {
-
-        }
-
-        .present-text {
-            margin: 60px 20px;
+        .text {
+            max-width: 650px;
+            margin: 0 auto;
         }
 
         img {
@@ -158,27 +140,30 @@
 
 <div class="wrapper">
 
-    <h1>Kevin Sint <small>Modular Synthesizers Electronic Music</small></h1>
+    <div class="card">
 
-    <ul class="where">
-        <li><a href="https://x.com/kevinsintlive" rel="nofollow">X</a></li>
-        <!--li><a href="https://rumble.com/c/c-5919363" rel="nofollow">Rumble</a></li-->
-        <li><a href="https://www.twitch.tv/kevinsint" rel="nofollow">Twitch</a></li>
-        <!--li><a href="https://www.youtube.com/channel/UCjC5i-1QJ3AA7iNfMEgz9kQ" rel="nofollow">YouTube</a></li-->
-        <!--li><a href="https://patreon.com/KevinSint" rel="nofollow">Patreon</a></li-->
-        <li><a href="https://kevinsint.notion.site" rel="nofollow">More...</a></li>
+        <h1>Kevin Sint <small>Modular Synthesizers Electronic Music</small></h1>
+
+        <ul class="where">
+            <li><a href="https://x.com/kevinsintlive" rel="nofollow">X</a></li>
+            <!--li><a href="https://rumble.com/c/c-5919363" rel="nofollow">Rumble</a></li-->
+            <li><a href="https://www.twitch.tv/kevinsint" rel="nofollow">Twitch</a></li>
+            <!--li><a href="https://www.youtube.com/channel/UCjC5i-1QJ3AA7iNfMEgz9kQ" rel="nofollow">YouTube</a></li-->
+            <!--li><a href="https://patreon.com/KevinSint" rel="nofollow">Patreon</a></li-->
+            <li><a href="https://kevinsint.notion.site" rel="nofollow">More...</a></li>
 
 
-    </ul>
-
-    <h2>En direct sur Twitch<br/>
-        <small>Interactions et modulations synthétiques</small>
-    </h2>
-
-    <p class="text-center">Jeudi 21 h</p>
+        </ul>
+    </div>
 
 
     <div class="card">
+        <h2>En direct sur Twitch<br/>
+            <small>Interactions et modulations synthétiques</small>
+        </h2>
+
+        <p class="text-center">Jeudi 21 h</p>
+
         <!-- Add a placeholder for the Twitch embed -->
         <div id="twitch-embed" class="responsive"></div>
         <!-- Load the Twitch embed script -->
@@ -186,46 +171,44 @@
 
     </div>
 
-    <div class="present">
-        <!--div class="present-image"><img src="public/images/sint-journey-2023-04.png" alt="Kevin Sint"></div-->
-        <div class="present-text">
+    <!--div class="present-image"><img src="public/images/sint-journey-2023-04.png" alt="Kevin Sint"></div-->
 
-            <div id="social-x" class="card">
-                <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Trying my first &quot;official&quot; video
-                    upload to X : ) I hope you&#39;ll like it. <a href="https://t.co/jrWwbbCg30">pic.twitter.com/jrWwbbCg30</a>
-                </p>&mdash; Kevin Sint (@kevinsintlive) <a
-                        href="https://twitter.com/kevinsintlive/status/1842236313501647005?ref_src=twsrc%5Etfw">October
-                    4, 2024</a></blockquote>
-                <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-            </div>
+    <div id="social-x" class="card">
+        <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Trying my first &quot;official&quot; video
+            upload to X : ) I hope you&#39;ll like it. <a href="https://t.co/jrWwbbCg30">pic.twitter.com/jrWwbbCg30</a>
+        </p>&mdash; Kevin Sint (@kevinsintlive) <a
+                href="https://twitter.com/kevinsintlive/status/1842236313501647005?ref_src=twsrc%5Etfw">October
+            4, 2024</a></blockquote>
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    </div>
 
-            <div id="bio" class="card">
+    <div class="card">
 
-                <h2>Bio ...</h2>
+        <div class="text">
+            <h2>Bio ...</h2>
 
-                <p>I’ve long had a passion for robotics and automation. However, today, with my IT business, I am drawn
-                    to more artistic hobbies.</p>
+            <p>I’ve long had a passion for robotics and automation. However, today, with my IT business, I am drawn
+                to more artistic hobbies.</p>
 
-                <p>Since my twenties, I’ve been attracted to the idea of making music to express myself, but I never
-                    enjoyed learning to play an instrument.</p>
+            <p>Since my twenties, I’ve been attracted to the idea of making music to express myself, but I never
+                enjoyed learning to play an instrument.</p>
 
-                <p>The day my friend introduced me to his Pocket Operator, everything changed. I was captivated by the
-                    ability to instantly create a rhythm that made me vibe.</p>
+            <p>The day my friend introduced me to his Pocket Operator, everything changed. I was captivated by the
+                ability to instantly create a rhythm that made me vibe.</p>
 
-                <p>I ditched the DJ table, which I had enjoyed for the past year, and devoted myself to making music
-                    with my newly purchased PO-33, Volca Modular, and Volca Drum.</p>
+            <p>I ditched the DJ table, which I had enjoyed for the past year, and devoted myself to making music
+                with my newly purchased PO-33, Volca Modular, and Volca Drum.</p>
 
-                <p>Gradually exploring the world of sound synthesis through my friend and countless videos, I
-                    eventually took the plunge into the limitless world of modular synthesizers.</p>
+            <p>Gradually exploring the world of sound synthesis through my friend and countless videos, I
+                eventually took the plunge into the limitless world of modular synthesizers.</p>
 
-                <p>I rediscovered the joy of hands-on interaction with tangible components —turning knobs, connecting
-                    wires— the same tactile satisfaction I once found in robotics and electronics, before everything
-                    became purely programmable.</p>
+            <p>I rediscovered the joy of hands-on interaction with tangible components —turning knobs, connecting
+                wires— the same tactile satisfaction I once found in robotics and electronics, before everything
+                became purely programmable.</p>
 
-                <p>But above all, music sets me free.</p>
+            <p>But above all, music sets me free.</p>
 
-                <p><em>Kevin</em></p>
-            </div>
+            <p><em>Kevin</em></p>
         </div>
     </div>
 </div>
@@ -239,7 +222,9 @@
 
 <script src="background.js"></script>
 
-<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js" data-id="kevinsint" data-description="Support me, buy me a patch cable :)" data-message="" data-color="#40DCA5" data-position="Right" data-x_margin="18" data-y_margin="18"></script>
+<script data-name="BMC-Widget" data-cfasync="false" src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
+        data-id="kevinsint" data-description="Support me, buy me a patch cable :)" data-message="" data-color="#40DCA5"
+        data-position="Right" data-x_margin="18" data-y_margin="18"></script>
 
 </body>
 
