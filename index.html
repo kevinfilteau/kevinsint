@@ -96,14 +96,22 @@
         }
 
         .card {
-            padding: 50px;
+            padding: 25px;
             margin: 100px 25px;
             background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.9) 100%);
             background-blend-mode: overlay;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border-radius: 20px;
-            width: 100%;
+            width: auto;
+            height: auto;
+        }
+
+        /* card for screen bigger than 700 px*/
+        @media (min-width: 700px) {
+           .card {
+                padding: 50px;
+            }
         }
 
         .text {
