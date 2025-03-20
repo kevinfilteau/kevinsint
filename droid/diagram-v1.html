@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mermaid Diagram Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        .mermaid {
+            margin-top: 20px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        #errorList {
+            margin-top: 20px;
+            color: red;
+            font-family: monospace;
+        }
+    </style>
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ startOnLoad: false });
+    </script>
+</head>
+<body>
+<h2>Mermaid Diagram Generator</h2>
+<form id="configForm">
+    <label for="configInput">Paste your config file here:</label><br>
+    <textarea id="configInput" name="configInput" placeholder="Paste your synthesizer config file here..."></textarea><br>
+    <button type="submit">Generate</button>
+</form>
+<div class="mermaid">
+    <!-- Diagram will be injected here -->
+</div>
+<div id="errorList">
+    <!-- Error messages will be listed here -->
+</div>
+
+<script>
+    // Function to generate Mermaid diagram
+    function generateMermaidDiagram(config) {
+        // Parse the config into circuits and connections
+        const lines = config.split('\n').map(line => line.trim());
+        const circuits = [];
+        const connections = new Map(); // Track patch cable connections
+        let currentCircuit = null;
+        const errors = []; // Store errors for conflicting patch cables
+
+        // Regular expressions for parsing
+        const circuitRegex = /^\[(\w+)\]$/;
+        const paramRegex = /(\w+)\s*=\s*([^\s]+)/;
+
+        lines.forEach(line => {
+            const circuitMatch = line.match(circuitRegex);
+            if (circuitMatch) {
+                currentCircuit = { name: circuitMatch[1], id: circuits.length, params: {} };
+                circuits.push(currentCircuit);
+                return;
+            }
+
+            if (currentCircuit && line.includes('=')) {
+                const paramMatch = line.match(paramRegex);
+                if (paramMatch) {
+                    const [_, key, value] = paramMatch;
+                    currentCircuit.params[key] = value;
+
+                    // Handle patch cables (starting with underscore)
+                    if (value.startsWith('_')) {
+                        if (!connections.has(value)) connections.set(value, { inputs: [], outputs: [] });
+                        if (['output', 'square', 'cvout', 'gateout'].includes(key)) {
+                            // Check if this patch cable already has an output
+                            if (connections.get(value).outputs.length > 0) {
+                                errors.push(`Error: Patch cable '${value}' already output by '${connections.get(value).outputs[0].name}', but also output by '${currentCircuit.name}'`);
+                            } else {
+                                connections.get(value).outputs.push(currentCircuit);
+                            }
+                        } else if (['input', 'clock', 'reset', 'trigger', 'cvin', 'gatein'].includes(key)) {
+                            connections.get(value).inputs.push(currentCircuit);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Generate Mermaid syntax
+        let mermaidCode = 'graph TD\n';
+
+        // Add circuit nodes with unique IDs
+        circuits.forEach((circuit, index) => {
+            mermaidCode += `    C${index}["${circuit.name}"]\n`;
+        });
+
+        // Add I/O nodes
+        const inputs = ['I1', 'I2', 'I3', 'I4', 'I5', 'I6'];
+        const outputs = ['O1', 'O2', 'O3', 'O4'];
+        inputs.forEach(i => mermaidCode += `    ${i}["${i} (Input)"]\n`);
+        outputs.forEach(o => mermaidCode += `    ${o}["${o} (Output)"]\n`);
+
+        // Add connections via patch cables (only use the first output)
+        connections.forEach((patch, cableName) => {
+            if (patch.outputs.length > 0) {
+                if (patch.inputs.length > 0) {
+                    // Connect the first output to each input (multiple behavior)
+                    patch.outputs.forEach(outputCircuit => {
+                        patch.inputs.forEach(inputCircuit => {
+                            mermaidCode += `    C${outputCircuit.id} -->|${cableName}| C${inputCircuit.id}\n`;
+                        });
+                    });
+                }
+            }
+        });
+
+        // Handle direct I/O connections
+        circuits.forEach((circuit, index) => {
+            Object.entries(circuit.params).forEach(([key, value]) => {
+                if (['input', 'cvin', 'gatein'].includes(key) && inputs.includes(value)) {
+                    mermaidCode += `    ${value} --> C${index}\n`;
+                }
+                if (['output', 'cvout', 'gateout'].includes(key) && outputs.includes(value)) {
+                    mermaidCode += `    C${index} --> ${value}\n`;
+                }
+            });
+        });
+
+        return { mermaidCode, errors };
+    }
+
+    // Form submission handler
+    document.getElementById('configForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const configInput = document.getElementById('configInput').value;
+        if (!configInput.trim()) {
+            alert('Please paste a config file before generating the diagram.');
+            return;
+        }
+
+        // Generate the diagram and errors
+        const { mermaidCode, errors } = generateMermaidDiagram(configInput);
+        const mermaidDiv = document.querySelector('.mermaid');
+        const errorDiv = document.getElementById('errorList');
+
+        // Inject the diagram
+        mermaidDiv.textContent = mermaidCode;
+
+        // Re-render the Mermaid diagram
+        mermaidDiv.removeAttribute('data-processed');
+        mermaid.run();
+
+        // Display errors below the diagram
+        if (errors.length > 0) {
+            errorDiv.innerHTML = '<h3>Patch Cable Errors:</h3><pre>' + errors.join('\n') + '</pre>';
+        } else {
+            errorDiv.innerHTML = '';
+        }
+
+        console.log(mermaidCode); // For debugging
+    });
+</script>
+</body>
+</html>

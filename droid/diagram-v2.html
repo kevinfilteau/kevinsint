@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Droid Patch Cable Diagram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        svg {
+            border: 1px solid #ccc;
+        }
+        .node rect {
+            fill: lightgray;
+            stroke: black;
+        }
+        .node text {
+            font-size: 12px;
+        }
+        .link {
+            stroke: black;
+            stroke-width: 1px;
+        }
+        .link-label {
+            font-size: 10px;
+            fill: darkblue;
+        }
+        #broken-cables {
+            margin-top: 20px;
+        }
+        #broken-cables ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+<h1>Droid Patch Cable Diagram</h1>
+<script>
+    // Droid config file as a string
+    const configText = `
+# Kevin Sint SEQ 1.0.1
+
+# Algoquencer + Minifonion based 16-step sequencer with random pitch
+# Clock: I1
+# Reset: I2
+# Random Trigger: I3
+# Energy: I4
+# Morph I5
+# Quantized Pitch CV: O1
+# Gate/Trigger: O2
+# Accent CV: O3
+
+# INPUTS:
+#  I1: [Clock]
+#  I2: [Run/Reset]
+
+# OUTPUTS:
+#  O1: [Gate] Seq Gate
+#  O2: [Note] Seq Gate
+#  O3: [GCV] Grain CV
+#  O4: [GT] Grain Clock
+
+[e4]
+
+# -------------------------------------------------
+# Global
+# -------------------------------------------------
+
+# On Boot Trigger
+[once]
+    delay = 0.01
+    trigger = _BOOT_TRIGGER
+
+# Normalization register Input 1
+[copy]
+    input = 0
+    output = N1
+
+# CLOCK - Input
+[copy]
+    input = I1
+    output = _CLOCK
+
+# CLOCK - 12 / Bar (Triplets)
+[clocktool]
+    clock = _CLOCK
+    reset = _RESET
+    multiply = 3
+    divide = 4
+#   output = _CLOCK_12
+
+# CLOCK - 1 / Bar
+[clocktool]
+    clock = _CLOCK
+    delay = 0
+    divide = 16
+    reset = _RESET
+    output = _CLOCK_BAR
+
+# CLOCK - Swing
+[timing]
+    clock = _CLOCK
+    reset = _RESET
+    timing1 = 0
+    timing2 = 0.1
+    output = _CLOCK_SWING
+
+# RESET - Run / Reset Input
+[copy]
+    input = I2
+    output = _RESET
+
+# Unconnected Outputs
+[mixer]
+    input4 = _POWER_INV
+    input1 = _CLOCK_SWING
+
+# RANDOM - 01 - 1..999999
+[random]
+    clock = _BOOT_TRIGGER
+    minimum = 1
+    steps = 999999
+    maximum = 999999
+    output = _RANDOM_01
+
+# RANDOM - 02- 1..999999
+[random]
+    clock = _BOOT_TRIGGER
+    minimum = 1
+    steps = 999999
+    maximum = 999999
+    output = _RANDOM_02
+
+# RANDOM - 03 - 1..999999
+[random]
+    clock = _BOOT_TRIGGER
+    minimum = 1
+    steps = 999999
+    maximum = 999999
+    output = _RANDOM_03
+
+# RANDOM - 04 - 1..999999
+[random]
+    clock = _BOOT_TRIGGER
+    minimum = 1
+    steps = 999999
+    maximum = 999999
+    output = _RANDOM_04
+
+# -------------------------------------------------
+# Navigation
+# -------------------------------------------------
+
+# -------------------------------------------------
+# Settings
+# -------------------------------------------------
+
+# SETTINGS-MODE - Encoder 4 button.
+[logic]
+    input1 = _DRUM_E4_BTN
+    input2 = _SEQ_CHAOS_BTN
+    input3 = _SETTINGS_MODE_BTN
+    or = _MODE_SELECT_BTN
+
+# SETTINGS-MODE - Pressing encoder 4 in all modes enters settings mode.
+[button]
+    dontsave = 1
+    button = _MODE_SELECT_BTN
+    output = _MODE_SELECT_ACTIVE
+
+# SETTINGS-MODE
+[encoder]
+    color = 0.8
+    discrete = 2
+    encoder = E1.4
+    select = _MODE_SELECT_ACTIVE
+    startvalue = 0
+    button = _SETTINGS_MODE_BTN
+    output = _MODE_SELECT_POS
+
+[copy]
+    input = _MODE_SELECT_ACTIVE * 10000 + _MODE_SELECT_POS
+    output = _MODE_SELECT_POS_E4
+
+# -------------------------------------------------
+# SEQ
+# -------------------------------------------------
+
+# SEQ - Progression Input
+[copy]
+    input = I6
+    output = _RECORD_INPUT
+
+# SEQ - Progression Record Led
+[copy]
+    input = I5
+    output = R6
+
+# SEQ - Progression
+[logic]
+    input1 = _RECORD_INPUT
+    negated = _RECORD_INPUT_NOT
+
+# SEQ - Recorder Trigger
+#
+# When record gate is high, the play trigger is ignored. When turning record gate to low, the next play trigger will stop recording and start playing.
+[logic]
+    input1 = _CLOCK_BAR
+    input2 = _RECORD_INPUT_NOT
+    threshold = 0.1
+    and = _PROGRESSION_PLAY
+
+# SEQ-PARAM - Change selected parameter (merge buttons)
+[logic]
+    input1 = _EC1A_BTN
+    input2 = _EC1B_BTN
+    input3 = _EC1C_BTN
+    or = _EC1_BTN
+
+# SEQ-PARAM - Change selected parameter (length, notes, undefined).
+[button]
+    button = _EC1_BTN
+    states = 3
+    output = _SEQ_PARAM_SELECT
+
+# SEQ-PARAM-LENGTH - Sequence length.
+[encoder]
+    color = 0.2 # cyan
+    discrete = 10
+    encoder = E1.1
+    select = _MODE_SELECT_POS * 100 + _SEQ_PARAM_SELECT
+    selectat = 0
+    button = _EC1A_BTN
+    output = _EC1A
+
+# SEQ-PARAM-RANDOM
+[switch]
+    input1 = _RANDOM_01
+    input2 = _RANDOM_02
+    input3 = _RANDOM_03
+    input4 = _RANDOM_04
+    offset = _SEQ_PARAM_PATTERN
+    output1 = _SELECTED_RANDOM
+
+# SEQ-PARAM-LENGTH - Sequence lengths choices.
+[switch]
+    input1 = 2
+    input2 = 4
+    input3 = 8
+    input4 = 16
+    input5 = 32
+    input6 = 64
+    input7 = 24
+    input8 = 12
+    input9 = 6
+    input10 = 3
+    offset = _EC1A
+    output1 = _SEQ_LENGTH
+
+# SEQ-PARAM-SCALE
+[encoder]
+    color = 0.3 # magenta
+    discrete = 8
+    encoder = E1.1
+    select = _MODE_SELECT_POS * 100 + _SEQ_PARAM_SELECT
+    selectat = 1
+    button = _EC1B_BTN
+    output = _EC1B
+
+# SEQ-PARAM-PATTERN
+[encoder]
+    color = 0.4 # magenta
+    discrete = 4
+    encoder = E1.1
+    select = _MODE_SELECT_POS * 100 + _SEQ_PARAM_SELECT
+    selectat = 2
+    button = _EC1C_BTN
+    output = _SEQ_PARAM_PATTERN
+
+# SEQ-POWER - 2nd knob
+[encoder]
+    color = 0.2 # cyan
+    encoder = E1.2
+    select = _MODE_SELECT_POS * 100
+    selectat = 0
+#   button = _EC2A_BTN
+    output = _EC2A # 0..1
+
+# SEQ-POWER - Output - Encoder + CV Input 4
+[mixer]
+    input1 = _EC2A
+    input2 = I4
+    output = _POWER
+
+# SEQ-POWER - Output Inverted
+[copy]
+    input = -1 * _POWER + 1
+    output = _POWER_INV
+
+# SEQ-POWER - Rolls
+[compare]
+    compare = 0.9
+    else = 0
+    ifgreater = _POWER * 0.1
+    input = _POWER
+    output = _POWER_ROLLS
+
+# SEQ-POWER - Gate Length
+[crossfader]
+    fade = _POWER
+    input1 = 0.3
+    input2 = 0.5
+    input3 = 2
+    input4 = 1
+    input5 = 0.7
+    input6 = 0.5
+    input7 = 0.25
+    input8 = 0.1
+    output = _POWER_GATE
+
+# SEQ-POWER - Pitch Range
+[switch]
+    input1 = 1 * 0.1
+    input2 = 1 * 0.1
+    input3 = 1 * 0.1
+    input4 = 2 * 0.1
+    input5 = 2 * 0.1
+    input6 = 2 * 0.1
+    input7 = 2 * 0.1
+    input8 = 2 * 0.1
+    input9 = 3 * 0.1
+    input10 = 3 * 0.1
+    input11 = 2 * 0.1
+    input12 = 1 * 0.1
+    offset = _POWER * 10
+    output1 = _PITCH_RANGE
+
+# SEQ-DEPTH - 3rd knob
+[encoder]
+    color = 0.2 # cyan
+    encoder = E1.3
+    select = 0
+    selectat = _MODE_SELECT_POS * 100
+#   button = _EC3A_BTN
+    output = _EC3A
+
+# SEQ-DEPTH - Output
+[mixer]
+    input1 = _EC3A
+    output = _DEPTH
+
+# SEQ-DEPTH - Output 0..3 for Branches
+[math]
+    input1 = _DEPTH * 3
+    round = _DEPTH_BRANCHES
+
+# SEQ-CHAOS - 4th knob - Mode A
+[encoder]
+    color = 0.2 # cyan
+    encoder = E1.4
+    select = 0
+    selectat = _MODE_SELECT_POS_E4 * 100
+    button = _SEQ_CHAOS_BTN
+    output = _EC4A
+
+# SEQ-CHAOS - Mixer
+[mixer]
+    input1 = _EC4A
+    output = _CHAOS
+
+# SEQ-CHAOS - Ouput Inverted
+[copy]
+    input = -1 * _CHAOS + 1
+    output = _CHAOS_INV
+
+# SEQ - Progression
+[recorder]
+    clock = _CLOCK
+    cvin = I5
+    playbutton = _PROGRESSION_PLAY
+    recordbutton = _RECORD_INPUT
+    cvout = _PROGRESSION_OUT
+    recordled = R6
+
+# SEQ - Sequencer
+[algoquencer]
+    pattern = _SELECTED_RANDOM * 1000
+    activity = _POWER
+    branches = _DEPTH_BRANCHES
+    clock = _CLOCK
+    dejavu = _CHAOS_INV * 0.5 + 0.5
+    gatelength = _POWER_GATE
+    length = _SEQ_LENGTH
+    morphs = _CHAOS
+    pitchhigh = _PITCH_RANGE
+    pitchlow = 0
+    reset = _RESET
+    rolls = _POWER_ROLLS
+    variation = _CHAOS * 0.5
+    gate = _SEQ_GATE
+    pitch = _RAW_PITCH
+
+# SEQ - Progression Pitch Mix
+[mixer]
+    input1 = _RAW_PITCH
+    input2 = _PROGRESSION_OUT * 0.2 - 0.2
+    output = _RAW_PITCH_MIX
+
+# SEQ - Output
+[copy]
+    input = _SEQ_GATE
+    output = O1
+
+# SEQ - Quantizer
+[minifonion]
+    degree = 7
+    harmonicshift = _EC1B
+    input = _RAW_PITCH_MIX
+    root = 0
+    trigger = _SEQ_GATE
+    output = O2
+
+# -------------------------------------------------
+# Grain
+# -------------------------------------------------
+
+# GRAIN-PARAM-CLOCK - Clock Multipliyer
+[encoder]
+    notch = 0.05
+    mode = 2
+    startvalue = 0
+    color = 0.4
+    negativecolor = 0.73
+    encoder = E1.1
+    select = _MODE_SELECT_POS * 100
+    selectat = 100
+    output = _GRAIN_CTRL
+
+# GRAIN-LOOP-CLK
+[switch]
+    input1 = 0
+    input2 = 0.0625
+    input3 = 0.125
+    input4 = 0.25
+    input5 = 0.5
+    input6 = 1
+    input7 = 2
+    input8 = 4
+    input9 = 8
+    input10 = 16
+    input11 = 32
+    offset = _GRAIN_CTRL * -11
+    output1 = _GRAIN_CTRL_DIV
+
+[compare]
+    input = _GRAIN_CTRL
+    compare = 0
+    ifgreater = 1
+    ifless = 2
+    ifequal = 0
+    output = _GRAIN_MODE
+
+# GRAIN-CLK-LOOP
+[select]
+    input = _GRAIN_CTRL_DIV
+    select = _GRAIN_MODE
+    selectat = 2
+    output = _GRAIN_CLK_DIV
+
+# GRAIN-CLK-GRANULAR
+[select]
+    input = _GRAIN_CTRL
+    select = _GRAIN_MODE
+    selectat = 1
+    output = _GRAIN_CLK_MULT
+
+[clocktool]
+    dutycycle = 0.1
+    clock = _CLOCK
+    reset = _RESET
+    divide = _GRAIN_CLK_DIV
+    multiply = _GRAIN_CLK_MULT * 32 + 0
+    delay = 0
+    output = _GRAIN_TRIG
+
+[bernoulli]
+    input = _GRAIN_TRIG
+    distribution = _GRAIN_CTRL * 2
+    output1 = _GRAIN_TRIG_MULT
+
+[mixer]
+    input1 = _GRAIN_TRIG_LOOP
+    input2 = _GRAIN_TRIG_GRANULAR
+    output = _GRAIN_TRIG
+
+[random]
+    clock = _GRAIN_TRIG
+    minimum = 0
+    maximum = 1
+    output = _GRAIN_RANDOM
+
+[cvlooper]
+    gatein = _GRAIN_TRIG
+    cvin = _GRAIN_RANDOM
+    clock = _CLOCK * 0.5
+    reset = _RESET
+    length = 16
+    loopswitch = I3
+    cvout = _GRAIN_CV_OUT
+    gateout = _GRAIN_TRIG_OUT
+
+# DRUM-E4
+[encoder]
+    color = 0.4
+    encoder = E1.4
+    select = _MODE_SELECT_POS_E4 * 100
+    selectat = 100
+    button = _DRUM_E4_BTN
+
+[copy]
+    input = _GRAIN_CV_OUT * 0.1
+    output = O3
+
+[copy]
+    input = _GRAIN_TRIG_OUT
+    output = O4
+        `;
+
+    // Parse the config file
+    function parseConfig(configText) {
+        const lines = configText.split('\n');
+        const circuits = [];
+        const typeCounters = {};
+        let currentCircuit = null;
+
+        // Parse lines into circuits
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('#') || trimmed === '') continue;
+            if (trimmed.startsWith('[')) {
+                if (currentCircuit) circuits.push(currentCircuit);
+                const type = trimmed.slice(1, -1);
+                typeCounters[type] = (typeCounters[type] || 0) + 1;
+                const id = `${type}${typeCounters[type]}`;
+                currentCircuit = { id, type, inputs: [], outputs: [] };
+            } else if (currentCircuit) {
+                const [key, value] = trimmed.split('=').map(s => s.trim());
+                if (value.startsWith('_')) {
+                    const cable = value;
+                    if (isInputParameter(key)) {
+                        currentCircuit.inputs.push({ parameter: key, cable });
+                    } else if (isOutputParameter(key)) {
+                        currentCircuit.outputs.push({ parameter: key, cable });
+                    }
+                }
+            }
+        }
+        if (currentCircuit) circuits.push(currentCircuit);
+
+        // Build links and detect broken cables
+        const cableToSource = {};
+        const inputCables = new Set();
+        const links = [];
+
+        for (const circuit of circuits) {
+            for (const output of circuit.outputs) {
+                const cable = output.cable;
+                if (cableToSource[cable]) {
+                    console.warn(`Cable ${cable} has multiple sources: ${cableToSource[cable].id} and ${circuit.id}`);
+                }
+                cableToSource[cable] = circuit;
+            }
+            for (const input of circuit.inputs) {
+                const cable = input.cable;
+                inputCables.add(cable);
+                if (cableToSource[cable]) {
+                    links.push({ source: cableToSource[cable].id, target: circuit.id, label: cable });
+                }
+            }
+        }
+
+        const brokenCables = Array.from(inputCables).filter(cable => !cableToSource[cable]);
+        return { circuits, links, brokenCables };
+    }
+
+    // Define input parameter keywords
+    function isInputParameter(key) {
+        const inputKeywords = [
+            'input', 'clock', 'reset', 'button', 'select', 'cvin', 'gatein', 'loopswitch',
+            'pattern', 'activity', 'branches', 'dejavu', 'gatelength', 'length', 'morphs',
+            'pitchhigh', 'pitchlow', 'rolls', 'variation', 'degree', 'harmonicshift',
+            'root', 'distribution', 'playbutton', 'recordbutton', 'fade'
+        ];
+        return inputKeywords.some(keyword => key.toLowerCase().includes(keyword));
+    }
+
+    // Define output parameter keywords
+    function isOutputParameter(key) {
+        const outputKeywords = [
+            'output', 'trigger', 'gate', 'cvout', 'recordled', 'or', 'and',
+            'ifgreater', 'ifless', 'ifequal', 'pitch', 'round', 'negated'
+        ];
+        return outputKeywords.some(keyword => key.toLowerCase().includes(keyword));
+    }
+
+    // Parse the config
+    const { circuits, links, brokenCables } = parseConfig(configText);
+
+    // Set up SVG canvas
+    const width = 1200;
+    const height = 800;
+    const svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // Define force simulation
+    const simulation = d3.forceSimulation(circuits)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Draw links
+    const link = svg.append("g")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class", "link");
+
+    // Draw link labels
+    const linkLabel = svg.append("g")
+        .selectAll("text")
+        .data(links)
+        .enter().append("text")
+        .attr("class", "link-label")
+        .text(d => d.label);
+
+    // Draw nodes
+    const boxWidth = 200;
+    const boxHeight = 100;
+
+    const node = svg.append("g")
+        .selectAll("g")
+        .data(circuits)
+        .enter().append("g")
+        .attr("class", "node");
+
+    // Circuit box
+    node.append("rect")
+        .attr("width", boxWidth)
+        .attr("height", boxHeight)
+        .attr("x", -boxWidth / 2)
+        .attr("y", -boxHeight / 2);
+
+    // Circuit name
+    node.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .text(d => d.id);
+
+    // Input cables (left side)
+    node.each(function(d) {
+        const inputs = d.inputs;
+        inputs.forEach((input, i) => {
+            d3.select(this).append("text")
+                .attr("x", -boxWidth / 2 + 5)
+                .attr("y", -boxHeight / 2 + 20 + i * 15)
+                .text(input.cable);
+        });
+    });
+
+    // Output cables (right side)
+    node.each(function(d) {
+        const outputs = d.outputs;
+        outputs.forEach((output, i) => {
+            d3.select(this).append("text")
+                .attr("x", boxWidth / 2 - 5)
+                .attr("y", -boxHeight / 2 + 20 + i * 15)
+                .attr("text-anchor", "end")
+                .text(output.cable);
+        });
+    });
+
+    // Update positions on each tick
+    simulation.on("tick", () => {
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+        link.attr("x1", d => d.source.x + boxWidth / 2)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x - boxWidth / 2)
+            .attr("y2", d => d.target.y);
+        linkLabel.attr("x", d => (d.source.x + d.target.x) / 2)
+            .attr("y", d => (d.source.y + d.target.y) / 2);
+    });
+
+    // List broken cables
+    d3.select("body").append("div")
+        .attr("id", "broken-cables")
+        .html("<h3>Broken Cables:</h3>" +
+            (brokenCables.length > 0
+                ? "<ul>" + brokenCables.map(c => `<li>${c}</li>`).join('') + "</ul>"
+                : "<p>None</p>"));
+</script>
+</body>
+</html>

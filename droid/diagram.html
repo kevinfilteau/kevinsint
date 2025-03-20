@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Circuit Diagram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #diagram-container {
+            overflow: auto;
+            max-height: 90vh;
+        }
+
+        svg {
+            border: 1px solid #ccc;
+        }
+
+        .node rect {
+            fill: lightgray;
+            stroke: black;
+        }
+
+        .node text {
+            font-size: 12px;
+        }
+
+        .link {
+            stroke: black;
+            stroke-width: 1px;
+            fill: none;
+        }
+    </style>
+</head>
+<body>
+<h1>Circuit Diagram</h1>
+<div id="diagram-container">
+    <svg id="diagram"></svg>
+</div>
+<script>
+
+    // Droid config file as a string
+    // todo read file assets/droid.ini
+
+    const configText = '';
+    // Sample circuit data (replace with your config parsing logic)
+
+    const layerSpacing = 150;
+    const nodeSpacing = 50;
+
+    // Layered layout with Sugiyama
+    const graph = {
+        nodes: circuits.map(d => ({ id: d.id })),
+        links: links.map(d => ({ source: d.source, target: d.target }))
+    };
+    const dag = d3.dagStratify()(graph);
+    const layout = d3.sugiyama().nodeSize([boxWidth + nodeSpacing, boxHeight + layerSpacing]);
+    layout(dag);
+
+    // Assign positions
+    const nodeMap = new Map(dag.descendants().map(d => [d.id, d]));
+    circuits.forEach(d => {
+        const node = nodeMap.get(d.id);
+        d.x = node.x;
+        d.y = node.y;
+    });
+
+    // Calculate pin positions
+    circuits.forEach(circuit => {
+        const pinSpacing = boxHeight / (Math.max(circuit.inputs.length, circuit.outputs.length) + 1);
+        circuit.inputPins = circuit.inputs.map((input, i) => ({
+            x: circuit.x - boxWidth / 2,
+            y: circuit.y - boxHeight / 2 + (i + 1) * pinSpacing,
+            cable: input.cable
+        }));
+        circuit.outputPins = circuit.outputs.map((output, i) => ({
+            x: circuit.x + boxWidth / 2,
+            y: circuit.y - boxHeight / 2 + (i + 1) * pinSpacing,
+            cable: output.cable
+        }));
+    });
+
+    // Set SVG size
+    const minX = d3.min(circuits, d => d.x - boxWidth / 2);
+    const maxX = d3.max(circuits, d => d.x + boxWidth / 2);
+    const minY = d3.min(circuits, d => d.y - boxHeight / 2);
+    const maxY = d3.max(circuits, d => d.y + boxHeight / 2);
+    const svgWidth = maxX - minX + 100;
+    const svgHeight = maxY - minY + 100;
+    svg.attr("width", svgWidth)
+        .attr("height", svgHeight)
+        .attr("viewBox", `${minX - 50} ${minY - 50} ${svgWidth} ${svgHeight}`);
+
+    // Draw circuit boxes
+    const node = svg.selectAll(".node")
+        .data(circuits)
+        .enter().append("g")
+        .attr("class", "node")
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+
+    node.append("rect")
+        .attr("width", boxWidth)
+        .attr("height", boxHeight)
+        .attr("x", -boxWidth / 2)
+        .attr("y", -boxHeight / 2);
+
+    node.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .text(d => d.id);
+
+    // Draw input/output labels
+    node.each(function(d) {
+        d.inputPins.forEach((pin, i) => {
+            d3.select(this).append("text")
+                .attr("x", -boxWidth / 2 + 5)
+                .attr("y", -boxHeight / 2 + (i + 1) * (boxHeight / (d.inputs.length + 1)))
+                .text(pin.cable);
+        });
+        d.outputPins.forEach((pin, i) => {
+            d3.select(this).append("text")
+                .attr("x", boxWidth / 2 - 5)
+                .attr("y", -boxHeight / 2 + (i + 1) * (boxHeight / (d.outputs.length + 1)))
+                .attr("text-anchor", "end")
+                .text(pin.cable);
+        });
+    });
+
+    // Draw orthogonal cables with rounded bends
+    const linkData = links.map(link => {
+        const sourceCircuit = circuits.find(c => c.id === link.source);
+        const targetCircuit = circuits.find(c => c.id === link.target);
+        const sourcePin = sourceCircuit.outputPins.find(p => p.cable === link.label);
+        const targetPin = targetCircuit.inputPins.find(p => p.cable === link.label);
+        return { sourcePin, targetPin, label: link.label };
+    });
+
+    svg.selectAll(".link")
+        .data(linkData)
+        .enter().append("path")
+        .attr("class", "link")
+        .attr("d", d => {
+            const sx = d.sourcePin.x, sy = d.sourcePin.y;
+            const tx = d.targetPin.x, ty = d.targetPin.y;
+            const midX = (sx + tx) / 2;
+            // Horizontal to mid-point, then vertical to target
+            return `M${sx},${sy} H${midX} Q${midX},${sy} ${midX},${sy + (ty - sy) / 2} V${ty} H${tx}`;
+        })
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .attr("fill", "none");
+    // Parse the config file
+    function parseConfig(configText) {
+        const lines = configText.split('\n');
+        const circuits = [];
+        const typeCounters = {};
+        let currentCircuit = null;
+
+        // Parse lines into circuits
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('#') || trimmed === '') continue;
+            if (trimmed.startsWith('[')) {
+                if (currentCircuit) circuits.push(currentCircuit);
+                const type = trimmed.slice(1, -1);
+                typeCounters[type] = (typeCounters[type] || 0) + 1;
+                const id = `${type}${typeCounters[type]}`;
+                currentCircuit = {id, type, inputs: [], outputs: []};
+            } else if (currentCircuit) {
+                const [key, value] = trimmed.split('=').map(s => s.trim());
+                if (value.startsWith('_')) {
+                    const cable = value;
+                    if (isInputParameter(key)) {
+                        currentCircuit.inputs.push({parameter: key, cable});
+                    } else if (isOutputParameter(key)) {
+                        currentCircuit.outputs.push({parameter: key, cable});
+                    }
+                }
+            }
+        }
+        if (currentCircuit) circuits.push(currentCircuit);
+
+        // Build links and detect broken cables
+        const cableToSource = {};
+        const inputCables = new Set();
+        const links = [];
+
+        for (const circuit of circuits) {
+            for (const output of circuit.outputs) {
+                const cable = output.cable;
+                if (cableToSource[cable]) {
+                    console.warn(`Cable ${cable} has multiple sources: ${cableToSource[cable].id} and ${circuit.id}`);
+                }
+                cableToSource[cable] = circuit;
+            }
+            for (const input of circuit.inputs) {
+                const cable = input.cable;
+                inputCables.add(cable);
+                if (cableToSource[cable]) {
+                    links.push({source: cableToSource[cable].id, target: circuit.id, label: cable});
+                }
+            }
+        }
+
+        const brokenCables = Array.from(inputCables).filter(cable => !cableToSource[cable]);
+        return {circuits, links, brokenCables};
+    }
+
+    // Define input parameter keywords
+    function isInputParameter(key) {
+        const inputKeywords = [
+            'input', 'clock', 'reset', 'button', 'select', 'cvin', 'gatein', 'loopswitch',
+            'pattern', 'activity', 'branches', 'dejavu', 'gatelength', 'length', 'morphs',
+            'pitchhigh', 'pitchlow', 'rolls', 'variation', 'degree', 'harmonicshift',
+            'root', 'distribution', 'playbutton', 'recordbutton', 'fade'
+        ];
+        return inputKeywords.some(keyword => key.toLowerCase().includes(keyword));
+    }
+
+    // Define output parameter keywords
+    function isOutputParameter(key) {
+        const outputKeywords = [
+            'output', 'trigger', 'gate', 'cvout', 'recordled', 'or', 'and',
+            'ifgreater', 'ifless', 'ifequal', 'pitch', 'round', 'negated'
+        ];
+        return outputKeywords.some(keyword => key.toLowerCase().includes(keyword));
+    }
+
+    // Parse the config
+    const {circuits, links, brokenCables} = parseConfig(configText);
+
+    // Set up SVG canvas
+    const width = 1200;
+    const height = 800;
+    const svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // Define force simulation
+    const simulation = d3.forceSimulation(circuits)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Draw links
+    const link = svg.append("g")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class", "link");
+
+    // Draw link labels
+    const linkLabel = svg.append("g")
+        .selectAll("text")
+        .data(links)
+        .enter().append("text")
+        .attr("class", "link-label")
+        .text(d => d.label);
+
+    // Draw nodes
+    const boxWidth = 200;
+    const boxHeight = 100;
+
+    const node = svg.append("g")
+        .selectAll("g")
+        .data(circuits)
+        .enter().append("g")
+        .attr("class", "node");
+
+    // Circuit box
+    node.append("rect")
+        .attr("width", boxWidth)
+        .attr("height", boxHeight)
+        .attr("x", -boxWidth / 2)
+        .attr("y", -boxHeight / 2);
+
+    // Circuit name
+    node.append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "0.35em")
+        .text(d => d.id);
+
+    // Input cables (left side)
+    node.each(function (d) {
+        const inputs = d.inputs;
+        inputs.forEach((input, i) => {
+            d3.select(this).append("text")
+                .attr("x", -boxWidth / 2 + 5)
+                .attr("y", -boxHeight / 2 + 20 + i * 15)
+                .text(input.cable);
+        });
+    });
+
+    // Output cables (right side)
+    node.each(function (d) {
+        const outputs = d.outputs;
+        outputs.forEach((output, i) => {
+            d3.select(this).append("text")
+                .attr("x", boxWidth / 2 - 5)
+                .attr("y", -boxHeight / 2 + 20 + i * 15)
+                .attr("text-anchor", "end")
+                .text(output.cable);
+        });
+    });
+
+    // Update positions on each tick
+    simulation.on("tick", () => {
+        node.attr("transform", d => `translate(${d.x},${d.y})`);
+        link.attr("x1", d => d.source.x + boxWidth / 2)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x - boxWidth / 2)
+            .attr("y2", d => d.target.y);
+        linkLabel.attr("x", d => (d.source.x + d.target.x) / 2)
+            .attr("y", d => (d.source.y + d.target.y) / 2);
+    });
+
+    // List broken cables
+    d3.select("body").append("div")
+        .attr("id", "broken-cables")
+        .html("<h3>Broken Cables:</h3>" +
+            (brokenCables.length > 0
+                ? "<ul>" + brokenCables.map(c => `<li>${c}</li>`).join('') + "</ul>"
+                : "<p>None</p>"));
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#diagram-container {
+    overflow: auto;
+    max-height: 90vh;
+}
+
+svg {
+    border: 1px solid #ccc;
+}
+
+.node rect {
+    fill: lightgray;
+    stroke: black;
+}
+
+.node text {
+    font-size: 12px;
+}
+
+.link {
+    stroke: black;
+    stroke-width: 1px;
+    fill: none;
+}
