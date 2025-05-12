@@ -1,6 +1,6 @@
 # kevinsint.live
 
-
+Removed build command.
 
 
 # Getting Started with Create React App
