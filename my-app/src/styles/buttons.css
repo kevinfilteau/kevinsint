@@ -1,0 +1,30 @@
+/* Global button styles - Mobile first */
+.btn {
+  display: inline-block;
+  background-color: var(--color-01);
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600; /* Make text bolder */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: center;
+}
+
+.btn:hover, 
+.btn:active {
+  background-color: #d3129a; /* Darker tone of var(--color-01) #F230AE */
+  filter: brightness(0.9);
+  color: white; /* Ensure text stays white on hover */
+}
+
+/* Desktop styles */
+@media (min-width: 768px) {
+  .btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+  }
+}

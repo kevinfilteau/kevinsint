@@ -1,0 +1,166 @@
+:root {
+    --color-card-text: #ffffff;
+    --color-01: #F230AE;
+    --color-02: #6038F2;
+    --color-03: #F2E530;
+    --color-04: #F2921D;
+    --color-05: #F24B0F;
+}
+
+body, html {
+    font-family: "Quicksand", Helvetica, sans-serif;
+    font-weight: normal;
+    color: #ffffff;
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+    body, html {
+        font-size: 18px;
+    }
+}
+
+/* Fixed Background Canvas, used by the background script. */
+#background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background: linear-gradient(135deg, #3b0a5e, #ff6600);
+}
+
+h1, h2 {
+    text-align: center;
+    font-family: "DM Serif Text", serif;
+}
+
+/* Link styling for all card types */
+.card a, .header-card a {
+    color: var(--color-card-text);
+    transition: color 0.2s ease;
+}
+
+.card a:hover, .header-card a:hover {
+    color: var(--color-01);
+    text-decoration: none;
+}
+
+.wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.text-center {
+    text-align: center;
+}
+
+h1 {
+    font-size: 1.8rem;
+}
+
+h1 small {
+    display: block;
+    font-size: 0.5em;
+    line-height: 1.2;
+}
+
+h2 {
+    font-size: 1.2rem;
+}
+
+@media (min-width: 768px) {
+    h1 {
+        font-size: 2.5rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+}
+
+.where {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.95rem;
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+    text-align: center;
+    width: fit-content;
+    gap: 15px;
+}
+
+/* Base card styling shared by all card types */
+.card-base {
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.9) 100%);
+    background-blend-mode: overlay;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    width: auto;
+    height: auto;
+}
+
+/* Regular content cards */
+.card {
+    padding: 25px;
+    margin: 100px 25px;
+    border-radius: 20px;
+}
+
+/* Apply card-base to all cards */
+.card, .header-card {
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.9) 100%);
+    background-blend-mode: overlay;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    width: auto;
+    height: auto;
+}
+
+.text {
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+.responsive {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio (divide 9 by 16 = 0.5625) */
+}
+
+.responsive > iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* card for screen bigger than 700 px*/
+@media (min-width: 768px) {
+    h1 {
+        font-size: 3rem;
+    }
+    h2 {
+        font-size: 1.8rem;
+    }
+    .card {
+        padding: 50px;
+    }
+}
